@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>大師智囊團</title>
+<meta name="author" content="謝邦彥 博士">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@700&family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -28,6 +29,9 @@ h2{font-size:clamp(24px,3vw,32px);font-weight:900}
 .banner{background:#0b0f1e;padding:0}
 .banner img{display:block;width:100%;max-width:1240px;height:auto;margin:0 auto;aspect-ratio:1672/941;object-fit:cover}
 @media(min-width:1240px){.banner{padding:24px 0 0;background:linear-gradient(#0b0f1e 70%,var(--bg))}.banner img{border-radius:16px;box-shadow:0 18px 48px rgba(0,0,0,.35)}}
+.byline{margin:.45em 0 0;font:600 15px/1.4 "Noto Serif TC",serif;color:var(--east);letter-spacing:.02em}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding:20px max(5vw,16px) 28px;background:var(--ink);color:var(--bg);border-top:1px solid color-mix(in srgb,var(--bg) 18%,transparent);font-size:14px}
+.foot span:last-child{font-family:"Noto Serif TC",serif;font-weight:600}
 .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(20px,4vw,48px);align-items:center}
 form{display:grid;gap:12px;margin-top:22px}
 label{font-weight:700;font-size:15px}
@@ -94,6 +98,7 @@ dt{font-weight:700;font-size:13px;color:var(--mute)}dd{margin:0}
 <section class="band"><div class="wrap hero">
   <div>
     <h1>召開一場議事</h1>
+    <p class="byline">謝邦彥 博士 設計</p>
     <p class="sub">把一個問題交給十二位大師：六位中國大師、六位外國大師，各自依自己的思維框架給出看法，最後合議成一份建議。</p>
     <form id="f">
       <label for="q">你的問題或決策</label>
@@ -125,6 +130,7 @@ dt{font-weight:700;font-size:13px;color:var(--mute)}dd{margin:0}
   <button class="copy" id="copy" type="button">複製總結</button>
   <p class="note" style="color:inherit;opacity:.7">各大師觀點是依其公開著作與言論提煉的思維框架所做的推演，並非本人意見；僅供思考參考，不構成投資、法律或醫療建議。</p>
 </div></section>
+<footer class="foot"><span>大師智囊團</span><span>謝邦彥 博士 設計</span></footer>
 
 <script>
 {
