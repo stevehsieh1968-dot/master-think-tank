@@ -1,0 +1,5 @@
+{
+  "name": "master-think-tank",
+  "private": true,
+  "engines": { "node": ">=18" }
+}
