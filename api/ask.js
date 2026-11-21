@@ -50,17 +50,27 @@ ${lines}
 
 只輸出 JSON：{"verdict":"一句話結論，不超過40字","consensus":["2到4點"],"divergence":["2到3點"],"eastWest":"中國與外國大師視角差異，60到100字","recommendation":"綜合建議，40到70字","steps":["3到5個有時間順序的行動步驟"],"risks":["2到3個風險"]}`;
 }
-function parseJSON(t){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw new Error('模型回傳格式錯誤');return JSON.parse(t.slice(a,b+1))}
+const VIEW={type:'object',properties:{stance:{type:'string',enum:STANCES},headline:{type:'string'},view:{type:'string'},keyQuestion:{type:'string'},action:{type:'string'}},required:['stance','headline','view','keyQuestion','action']};
+const SUMMARY={type:'object',properties:{verdict:{type:'string'},consensus:{type:'array',items:{type:'string'}},divergence:{type:'array',items:{type:'string'}},eastWest:{type:'string'},recommendation:{type:'string'},steps:{type:'array',items:{type:'string'}},risks:{type:'array',items:{type:'string'}}},required:['verdict','consensus','divergence','eastWest','recommendation','steps','risks']};
+const sideSchema=ids=>({type:'object',properties:{views:{type:'object',properties:Object.fromEntries(ids.map(id=>[id,VIEW])),required:ids}},required:['views']});
 
-async function callClaude(prompt){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'x-api-key':process.env.ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
-    body:JSON.stringify({model:process.env.ANTHROPIC_MODEL||'claude-sonnet-5-5',max_tokens:4096,messages:[{role:'user',content:prompt}]})
-  });
-  const j=await r.json().catch(()=>({}));
-  if(!r.ok){const e=new Error(j?.error?.message||('Anthropic API '+r.status));e.status=r.status===429?429:502;throw e}
-  return (j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+// 以 tool use 取得結構化 JSON，避免模型輸出的引號破壞格式
+async function callClaude(prompt,schema){
+  const body={model:process.env.ANTHROPIC_MODEL||'claude-sonnet-5-5',max_tokens:4096,
+    tools:[{name:'submit',description:'提交結果',input_schema:schema}],tool_choice:{type:'tool',name:'submit'},
+    messages:[{role:'user',content:prompt+'\n\n請呼叫 submit 工具提交結果。'}]};
+  let last;
+  for(let attempt=0;attempt<2;attempt++){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'x-api-key':process.env.ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'},
+      body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){last=new Error(j?.error?.message||('Anthropic API '+r.status));last.status=r.status===429?429:502;if(r.status<500&&r.status!==429)break;continue}
+    const tu=(j.content||[]).find(b=>b.type==='tool_use');
+    if(tu&&tu.input&&typeof tu.input==='object')return tu.input;
+    last=new Error('模型沒有回傳結構化結果');last.status=502;
+  }
+  throw last;
 }
 
 module.exports=async(req,res)=>{
@@ -76,7 +86,7 @@ module.exports=async(req,res)=>{
     if(body.kind==='side'){
       const ids=[...new Set(Array.isArray(body.ids)?body.ids:[])].filter(id=>BY_ID[id]).slice(0,6);
       if(!ids.length)return res.status(400).json({error:'缺少大師名單'});
-      const out=parseJSON(await callClaude(sidePrompt(ids.map(id=>BY_ID[id]),q,ctx)));
+      const out=await callClaude(sidePrompt(ids.map(id=>BY_ID[id]),q,ctx),sideSchema(ids));
       return res.status(200).json({data:out});
     }
     if(body.kind==='summary'){
@@ -86,7 +96,7 @@ module.exports=async(req,res)=>{
         views[id]={stance:STANCES.includes(v.stance)?v.stance:'有條件支持',headline:clip(v.headline,40),view:clip(v.view,400),action:clip(v.action,120)};
       }
       if(!Object.keys(views).length)return res.status(400).json({error:'缺少大師發言'});
-      const out=parseJSON(await callClaude(sumPrompt(q,ctx,views)));
+      const out=await callClaude(sumPrompt(q,ctx,views),SUMMARY);
       return res.status(200).json({data:out});
     }
     return res.status(400).json({error:'未知的請求類型'});

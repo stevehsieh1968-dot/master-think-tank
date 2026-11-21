@@ -334,14 +334,16 @@ $('#f').addEventListener('submit',async e=>{
   try{
     const act=M.filter(m=>state.active.includes(m.id));
     const groups=[act.filter(m=>m.side==='east'),act.filter(m=>m.side==='west')].filter(g=>g.length);
-    await Promise.all(groups.map(g=>askSide(g,q,ctx).then(r=>{
+    const settled=await Promise.allSettled(groups.map(g=>askSide(g,q,ctx).then(r=>{
       for(const m of g){const v=r.views?.[m.id];if(v){if(!STANCES.includes(v.stance))v.stance='有條件支持';state.views[m.id]=v}}
       render();
     })));
-    if(!Object.keys(state.views).length)throw new Error('沒有收到大師的發言');
+    const failed=settled.filter(x=>x.status==='rejected');
+    if(!Object.keys(state.views).length)throw failed[0]?.reason||new Error('沒有收到大師的發言');
+    if(failed.length)state.active=state.active.filter(id=>state.views[id]);
     $('#status').textContent='主持人整理合議中…';
     state.summary=await askSum(q,ctx,state.views);
-    $('#status').textContent='議事完成。';save();
+    $('#status').textContent=failed.length?'議事完成（有一組大師這次沒有回應，可以再按一次補上）。':'議事完成。';save();
   }catch(err){
     const c=err&&err.code;
     $('#status').textContent=c==='not_granted'?'需要允許此頁使用 Claude 才能召集智囊團。':c==='rate_limited'?'請求太頻繁，請稍候一分鐘再試。':'這次議事沒有完成（'+(err.message||'未知錯誤')+'），可以再按一次。';
