@@ -57,7 +57,7 @@ const sideSchema=ids=>({type:'object',properties:{views:{type:'object',propertie
 // 以 tool use 取得結構化 JSON，避免模型輸出的引號破壞格式
 async function callClaude(prompt,schema){
   const body={model:process.env.ANTHROPIC_MODEL||'claude-sonnet-5-5',max_tokens:4096,
-    tools:[{name:'submit',description:'提交結果',input_schema:schema}],tool_choice:{type:'tool',name:'submit'},
+    tools:[{name:'submit',description:'提交最終結果。必須呼叫此工具，不要用文字回覆。',input_schema:schema}],tool_choice:{type:'auto'},
     messages:[{role:'user',content:prompt+'\n\n請呼叫 submit 工具提交結果。'}]};
   let last;
   for(let attempt=0;attempt<2;attempt++){
@@ -68,6 +68,8 @@ async function callClaude(prompt,schema){
     if(!r.ok){last=new Error(j?.error?.message||('Anthropic API '+r.status));last.status=r.status===429?429:502;if(r.status<500&&r.status!==429)break;continue}
     const tu=(j.content||[]).find(b=>b.type==='tool_use');
     if(tu&&tu.input&&typeof tu.input==='object')return tu.input;
+    const txt=(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    try{const a=txt.indexOf('{'),b=txt.lastIndexOf('}');if(a>=0&&b>a)return JSON.parse(txt.slice(a,b+1))}catch(e){}
     last=new Error('模型沒有回傳結構化結果');last.status=502;
   }
   throw last;
