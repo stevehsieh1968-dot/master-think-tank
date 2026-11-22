@@ -357,7 +357,7 @@ $('#f').addEventListener('submit',async e=>{
   try{
     const act=M.filter(m=>state.active.includes(m.id));
     const groups=[act.filter(m=>m.side==='east'),act.filter(m=>m.side==='west')].filter(g=>g.length);
-    const settled=await Promise.allSettled(groups.map(g=>askSide(g,q,ctx).then(r=>{
+    const settled=await Promise.allSettled(groups.map((g,i)=>(i&&!sample?new Promise(r=>setTimeout(r,2500)):Promise.resolve()).then(()=>askSide(g,q,ctx)).then(r=>{
       for(const m of g){const v=r.views?.[m.id];if(v){if(!STANCES.includes(v.stance))v.stance='有條件支持';state.views[m.id]=v}}
       render();
     })));
