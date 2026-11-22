@@ -78,6 +78,8 @@ const M=[
 {id:'jobs',tool:'聚焦就是說不',side:'west',seal:'賈',name:'賈伯斯',era:'Apple 創辦人',lens:'聚焦就是說不、端到端掌控、連點成線、死亡過濾器、科技與人文交會；直接、挑剔、追求令人驚嘆的體驗，第一人稱。'},
 {id:'buffett',tool:'安全邊際',side:'west',seal:'巴',name:'巴菲特',era:'投資家',lens:'護城河、安全邊際、能力圈、市場先生、複利、打孔卡20次、聲譽法則；平實比喻、重長期、不虧本金。'},
 {id:'musk',tool:'第一性原理',side:'west',seal:'馬',name:'馬斯克',era:'Tesla / SpaceX',lens:'第一性原理與漸近極限（理論最低成本/時間）、五步演算法（質疑需求、刪除、簡化、加速、自動化）、快速迭代、極端期限。'}];
+const store=require('./_store');
+const crypto=require('crypto');
 const STANCES=['支持','有條件支持','先別急','反對'];
 const FITS=['高','中','低'];
 const BY_ID=Object.fromEntries(M.map(m=>[m.id,m]));
@@ -150,6 +152,12 @@ async function callClaude(userMsg){
 }
 const meta=u=>({input:u.input_tokens||0,cacheRead:u.cache_read_input_tokens||0,cacheWrite:u.cache_creation_input_tokens||0,output:u.output_tokens||0});
 
+const ipHash=ip=>crypto.createHash('sha256').update(ip+'|mtt').digest('hex').slice(0,10);
+async function record(base,extra,usage){
+  const u=usage?meta(usage):{input:0,cacheRead:0,cacheWrite:0,output:0};
+  return store.logCall({...base,...extra,usage:u,cost:+store.cost(u).toFixed(6),model:process.env.ANTHROPIC_MODEL||'claude-sonnet-5-5'});
+}
+
 module.exports=async(req,res)=>{
   if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({error:'只接受 POST'})}
   if(!process.env.ANTHROPIC_API_KEY)return res.status(500).json({error:'此網站目前未開放即時提問（伺服器尚未設定 ANTHROPIC_API_KEY）'});
@@ -159,6 +167,8 @@ module.exports=async(req,res)=>{
   body=body||{};
   const q=clip(body.q,1000).trim(),ctx=clip(body.ctx,1000).trim();
   if(!q)return res.status(400).json({error:'缺少問題'});
+  const sid=/^[a-z0-9]{6,32}$/.test(String(body.sid||''))?String(body.sid):'x'+Date.now().toString(36);
+  const base={sid,ts:Date.now(),kind:String(body.kind||''),q,ctx,ip:ipHash(ip)};
   try{
     if(body.kind==='side'){
       const ids=[...new Set(Array.isArray(body.ids)?body.ids:[])].filter(id=>BY_ID[id]).slice(0,6);
@@ -166,7 +176,8 @@ module.exports=async(req,res)=>{
       const {data,usage}=await callClaude(sideMsg(ids.map(id=>BY_ID[id]),q,ctx));
       const views={};
       for(const id of ids){const v=data?.views?.[id];if(v)views[id]={...v,stance:STANCES.includes(v.stance)?v.stance:'有條件支持',fit:FITS.includes(v.fit)?v.fit:'中'}}
-      return res.status(200).json({data:{views},usage:meta(usage)});
+      const logged=await record(base,{ids,stances:ids.filter(id=>views[id]).map(id=>[id,views[id].stance,views[id].fit])},usage);
+      return res.status(200).json({data:{views},usage:meta(usage),logged});
     }
     if(body.kind==='summary'){
       const views={};
@@ -176,8 +187,12 @@ module.exports=async(req,res)=>{
       }
       if(!Object.keys(views).length)return res.status(400).json({error:'缺少大師發言'});
       const {data,usage}=await callClaude(sumMsg(q,ctx,views));
-      return res.status(200).json({data,usage:meta(usage)});
+      const logged=await record(base,{ids:Object.keys(views),verdict:clip(data&&data.verdict,200),recommendation:clip(data&&data.recommendation,300)},usage);
+      return res.status(200).json({data,usage:meta(usage),logged});
     }
     return res.status(400).json({error:'未知的請求類型'});
-  }catch(e){return res.status(e.status||500).json({error:e.message||'伺服器錯誤'})}
+  }catch(e){
+    await record(base,{error:clip(e.message||'伺服器錯誤',300)},null);
+    return res.status(e.status||500).json({error:e.message||'伺服器錯誤'});
+  }
 };

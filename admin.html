@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>大師智囊團｜後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#fbfaf7,#121214);--panel:light-dark(#fff,#1b1b1f);--ink:light-dark(#18181b,#ecebe7);--mute:light-dark(#62605b,#a3a19b);--line:light-dark(#e3e0d8,#2e2e33);--east:light-dark(#b8232f,#ef5a5f);--west:light-dark(#1f4fa8,#6f9cf0);--soft:light-dark(#f1ede4,#202024)}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Noto Sans TC",system-ui,sans-serif}
+h1,h2{font-family:"Noto Serif TC",serif;margin:0;line-height:1.2}
+.wrap{max-width:1240px;margin:0 auto;padding:24px max(4vw,16px) 60px}
+button,input{font:inherit;color:inherit}
+button{min-height:40px;border-radius:9px;padding:0 16px;border:1.5px solid var(--line);background:var(--panel);cursor:pointer}
+.dark{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+input{min-height:44px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel);padding:0 12px;font-size:16px}
+:focus-visible{outline:3px solid var(--west);outline-offset:2px}
+#login{max-width:380px;margin:12vh auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px}
+#login form{display:grid;gap:12px;margin-top:16px}
+.err{color:var(--east);min-height:22px;font-size:14px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin-bottom:22px}
+.top .meta{color:var(--mute);font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.kpi small{color:var(--mute);font-size:13px}
+.kpi b{display:block;font:900 30px/1.2 "Noto Serif TC",serif;margin:6px 0 2px;white-space:nowrap}
+.kpi span{font-size:13px;color:var(--mute)}
+.kpi.main{border-color:var(--ink)}
+.extra{display:flex;flex-wrap:wrap;gap:8px 24px;margin:12px 2px 0;color:var(--mute);font-size:14px}
+.extra strong{color:var(--ink)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+.panel h2{font-size:19px;margin-bottom:12px}
+.chart{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px;align-items:end;height:170px;border-bottom:1px solid var(--line)}
+.chart div{background:var(--east);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.chart div.zero{background:var(--line)}
+.chart div:hover{opacity:.75}
+.axis{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));font-size:11px;color:var(--mute);margin-top:4px}
+.axis span{white-space:nowrap;overflow:visible}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.tools input{flex:1 1 220px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:var(--mute);font-weight:700;padding:8px;border-bottom:1.5px solid var(--line);white-space:nowrap}
+td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.s{cursor:pointer}tr.s:hover td{background:var(--soft)}
+th.r{text-align:right}
+td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.t{white-space:nowrap;color:var(--mute);font-size:13px}
+.q{font-weight:500}.ctx{color:var(--mute);font-size:13px;margin-top:2px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;border:1.5px solid currentColor;white-space:nowrap}
+.ok{color:var(--ink)}.part{color:#b4690e}.bad{color:var(--east)}
+tr.d td{background:var(--soft);font-size:13px}
+.det{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px}
+.det dt{font-weight:700;color:var(--mute);font-size:12px}.det dd{margin:0 0 6px}
+.st{display:flex;flex-wrap:wrap;gap:6px}
+.st span{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12px}
+.empty{color:var(--mute);text-align:center;padding:30px}
+.foot{color:var(--mute);font-size:13px;margin-top:16px}
+@media(max-width:800px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.det{grid-template-columns:minmax(0,1fr)}.hide-s{display:none}}
+</style>
+</head>
+<body>
+<div id="login">
+  <h1>大師智囊團・後台</h1>
+  <p style="color:var(--mute);margin:.4em 0 0">查看提問紀錄與 API 花費。</p>
+  <form id="lf"><label for="pw">管理密碼</label><input id="pw" type="password" autocomplete="current-password" required><button class="dark" type="submit">登入</button><div class="err" id="lerr" role="alert"></div></form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="top">
+    <div><h1>大師智囊團・後台</h1><div class="meta" id="meta"></div></div>
+    <div style="display:flex;gap:8px"><button id="reload" type="button">重新整理</button><button id="logout" type="button">登出</button></div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="extra" id="extra"></div>
+
+  <section class="panel"><h2>近 30 天每日花費（美元）</h2><div class="chart" id="chart"></div><div class="axis" id="axis"></div></section>
+
+  <section class="panel">
+    <h2>提問紀錄</h2>
+    <div class="tools"><input id="search" type="search" placeholder="搜尋問題、背景或結論…" aria-label="搜尋"><button id="csv" type="button">下載 CSV</button></div>
+    <div class="scroll"><table><thead><tr><th>時間</th><th>問題</th><th class="hide-s">結論</th><th>狀態</th><th class="hide-s r">大師</th><th class="hide-s r">Token（輸入／輸出）</th><th class="hide-s r">快取命中</th><th class="r">費用</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+{
+const NAMES={sunzi:'孫子',wym:'王陽明',zgf:'曾國藩',ggz:'鬼谷子',zgl:'諸葛亮',hushi:'胡適',einstein:'愛因斯坦',drucker:'德魯克',munger:'芒格',jobs:'賈伯斯',buffett:'巴菲特',musk:'馬斯克'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtT=ts=>new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ts));
+const usd=v=>'US$'+(v<1?v.toFixed(3):v.toFixed(2));
+const k=n=>n>=1000?(n/1000).toFixed(1)+'k':String(n);
+let PW='',DATA=null,open=new Set();
+try{PW=sessionStorage.getItem('mtt-admin')||''}catch(e){}
+
+async function load(){
+  $('#meta').textContent='載入中…';
+  const r=await fetch('/api/admin',{headers:{authorization:'Bearer '+PW},cache:'no-store'});
+  const j=await r.json().catch(()=>({error:'回應格式錯誤'}));
+  if(r.status===401){logout('密碼錯誤');return}
+  if(!r.ok){showApp();$('#meta').textContent=j.error||('錯誤 '+r.status);return}
+  DATA=j;showApp();render();
+}
+function showApp(){$('#login').hidden=true;$('#app').hidden=false}
+function logout(msg){PW='';try{sessionStorage.removeItem('mtt-admin')}catch(e){}$('#app').hidden=true;$('#login').hidden=false;$('#lerr').textContent=msg||'';$('#pw').value='';$('#pw').focus()}
+
+function render(){
+  const d=DATA,rate=d.usdTwd;
+  $('#meta').textContent='更新於 '+fmtT(d.generatedAt)+'（台北時間）';
+  const tile=(label,t,main)=>`<div class="kpi${main?' main':''}"><small>${label}</small><b>${usd(t.cost)}</b><span>約 NT$${Math.round(t.cost*rate).toLocaleString()}・${t.sessions} 場議事</span></div>`;
+  $('#kpis').innerHTML=tile('今天',d.totals.today,true)+tile('近 7 天',d.totals.d7)+tile('近 30 天',d.totals.d30)+tile('累計',d.totals.all);
+  const all=d.sessions,done=all.filter(s=>s.complete),avg=done.length?done.reduce((t,s)=>t+s.cost,0)/done.length:0;
+  const hit=done.length?done.reduce((t,s)=>t+s.cacheHit,0)/done.length:0;
+  $('#extra').innerHTML=`<span>每場平均 <strong>${usd(avg)}</strong>（約 NT$${(avg*rate).toFixed(1)}）</span><span>近 30 天匿名訪客 <strong>${d.uniqueVisitors30}</strong> 人</span><span>平均快取命中 <strong>${Math.round(hit*100)}%</strong></span><span>未完成或出錯 <strong>${all.length-done.length}</strong> 場</span>`;
+  const max=Math.max(...d.daily.map(x=>x.cost),0.0001);
+  $('#chart').innerHTML=d.daily.map(x=>`<div class="${x.cost?'':'zero'}" style="height:${Math.max(1,x.cost/max*100)}%" title="${x.date}：${usd(x.cost)}，${x.sessions} 場"></div>`).join('');
+  $('#axis').innerHTML=d.daily.map((x,i)=>`<span>${i%5===0||i===29?x.date.slice(5).replace('-','/'):''}</span>`).join('');
+  $('#foot').textContent=`費用依官方牌價估算：輸入 $${d.pricing.input}、輸出 $${d.pricing.output}、快取寫入 $${d.pricing.cacheWrite}、快取讀取 $${d.pricing.cacheRead}（美元／百萬 token），匯率以 1 美元 ≈ ${rate} 新台幣計；實際金額以 Anthropic Console 帳單為準。`;
+  rows();
+}
+function rows(){
+  const q=$('#search').value.trim().toLowerCase();
+  const list=DATA.sessions.filter(s=>!q||[s.q,s.ctx,s.verdict,s.recommendation].join(' ').toLowerCase().includes(q));
+  if(!list.length){$('#rows').innerHTML=`<tr><td colspan="8" class="empty">${DATA.sessions.length?'沒有符合的紀錄':'還沒有任何提問紀錄'}</td></tr>`;return}
+  $('#rows').innerHTML=list.map(s=>{
+    const st=s.errors.length&&!s.complete?['bad','出錯']:s.complete?['ok','完成']:['part','未完成'];
+    const u=s.usage;
+    let h=`<tr class="s" data-sid="${esc(s.sid)}" tabindex="0" aria-expanded="${open.has(s.sid)}"><td class="t">${fmtT(s.ts)}</td><td><div class="q">${esc(s.q)}</div>${s.ctx?`<div class="ctx">${esc(s.ctx)}</div>`:''}</td><td class="hide-s">${esc(s.verdict)}</td><td><span class="tag ${st[0]}">${st[1]}</span></td><td class="num hide-s">${s.masters}</td><td class="num hide-s">${k(u.input+u.cacheWrite+u.cacheRead)}／${k(u.output)}</td><td class="num hide-s">${Math.round(s.cacheHit*100)}%</td><td class="num">${usd(s.cost)}</td></tr>`;
+    if(open.has(s.sid))h+=`<tr class="d"><td colspan="8"><dl class="det"><div><dt>結論</dt><dd>${esc(s.verdict)||'—'}</dd><dt>綜合建議</dt><dd>${esc(s.recommendation)||'—'}</dd>${s.errors.length?`<dt>錯誤</dt><dd style="color:var(--east)">${s.errors.map(esc).join('<br>')}</dd>`:''}</div><div><dt>各大師立場（框架適用度）</dt><dd class="st">${s.stances.map(([id,st,fit])=>`<span>${NAMES[id]||id}：${esc(st)}（${esc(fit)}）</span>`).join('')||'—'}</dd><dt>Token 明細</dt><dd>輸入 ${u.input.toLocaleString()}・快取寫入 ${u.cacheWrite.toLocaleString()}・快取讀取 ${u.cacheRead.toLocaleString()}・輸出 ${u.output.toLocaleString()}（${s.calls} 次呼叫）</dd><dt>議事編號</dt><dd>${esc(s.sid)}</dd></div></dl></td></tr>`;
+    return h}).join('');
+}
+function csv(){
+  const head=['時間','問題','背景','結論','綜合建議','狀態','大師數','輸入token','快取寫入','快取讀取','輸出token','費用USD'];
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const lines=DATA.sessions.map(s=>[fmtT(s.ts),s.q,s.ctx,s.verdict,s.recommendation,s.complete?'完成':(s.errors.length?'出錯':'未完成'),s.masters,s.usage.input,s.usage.cacheWrite,s.usage.cacheRead,s.usage.output,s.cost].map(q).join(','));
+  const blob=new Blob(['﻿'+[head.map(q).join(','),...lines].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='大師智囊團_提問紀錄.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+$('#lf').addEventListener('submit',e=>{e.preventDefault();PW=$('#pw').value;try{sessionStorage.setItem('mtt-admin',PW)}catch(e){}$('#lerr').textContent='';load()});
+$('#reload').addEventListener('click',load);
+$('#logout').addEventListener('click',()=>logout(''));
+$('#search').addEventListener('input',rows);
+$('#csv').addEventListener('click',()=>DATA&&csv());
+const toggle=tr=>{const id=tr.dataset.sid;open.has(id)?open.delete(id):open.add(id);rows()};
+$('#rows').addEventListener('click',e=>{const tr=e.target.closest('tr.s');if(tr)toggle(tr)});
+$('#rows').addEventListener('keydown',e=>{const tr=e.target.closest('tr.s');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggle(tr)}});
+if(PW)load();else $('#pw').focus();
+}
+</script>
+</body>
+</html>

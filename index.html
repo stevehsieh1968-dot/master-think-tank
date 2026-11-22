@@ -108,6 +108,7 @@ dt{font-weight:700;font-size:13px;color:var(--mute)}dd{margin:0}
       <textarea id="ctx" rows="2" placeholder="時間、預算、家庭、已知條件…"></textarea>
       <div class="row"><button class="go" id="go" type="submit">召集智囊團</button><span class="hint">點選圓桌上的座位可請大師入席或離席</span></div>
       <div class="row" id="presets"></div>
+      <p class="hint">提問內容會記錄在網站後台，用於統計使用情況與改善服務；請勿輸入姓名、電話等個人資料。</p>
       <div class="status" id="status" role="status"></div>
     </form>
   </div>
@@ -340,8 +341,9 @@ async function callApi(body){
   if(!r.ok){const e=new Error(j.error||('HTTP '+r.status));if(r.status===429)e.code='rate_limited';throw e}
   return j.data;
 }
-const askSide=(g,q,ctx)=>sample?ask(sidePrompt(g,q,ctx)):callApi({kind:'side',ids:g.map(m=>m.id),q,ctx});
-const askSum=(q,ctx,views)=>sample?ask(sumPrompt(q,ctx,views)):callApi({kind:'summary',q,ctx,views});
+let SID='';
+const askSide=(g,q,ctx)=>sample?ask(sidePrompt(g,q,ctx)):callApi({kind:'side',ids:g.map(m=>m.id),q,ctx,sid:SID});
+const askSum=(q,ctx,views)=>sample?ask(sumPrompt(q,ctx,views)):callApi({kind:'summary',q,ctx,views,sid:SID});
 async function ask(prompt){
   const r=await sample(prompt,{modelTier:'default',cache:false});return parseJSON(r.text);
 }
@@ -349,7 +351,7 @@ $('#f').addEventListener('submit',async e=>{
   e.preventDefault();if(busy)return;
   const q=$('#q').value.trim(),ctx=$('#ctx').value.trim();
   if(!q){$('#status').textContent='請先寫下你的問題。';$('#q').focus();return}
-  busy=true;$('#go').disabled=true;$('#go').textContent='議事中…';
+  SID=(Date.now().toString(36)+Math.random().toString(36).slice(2,8)).toLowerCase();busy=true;$('#go').disabled=true;$('#go').textContent='議事中…';
   state={q,ctx,views:{},summary:null,active:state.active,example:false};render();
   $('#status').textContent='中外兩方大師同時發言中…';
   try{

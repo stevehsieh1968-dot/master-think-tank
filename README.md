@@ -18,14 +18,30 @@
    | `ANTHROPIC_API_KEY` | 是 | 你的 Anthropic API 金鑰（到 [console.anthropic.com](https://console.anthropic.com) 建立） |
    | `ANTHROPIC_MODEL` | 否 | 預設 `claude-sonnet-5-5` |
    | `RATE_LIMIT` | 否 | 每個 IP 每 10 分鐘最多請求數，預設 30 |
+| `ADMIN_PASSWORD` | 後台用 | 後台 `/admin` 的登入密碼 |
+| `KV_REST_API_URL`、`KV_REST_API_TOKEN` | 後台用 | 連接 Upstash Redis 後由 Vercel 自動設定 |
+| `USD_TWD` | 否 | 後台換算新台幣的匯率，預設 32 |
 
 3. 重新部署（Deployments → Redeploy），完成後就有可分享的網址。
+
+## 後台
+
+網址加上 `/admin` 即可登入（例如 `https://你的網域/admin`），可查看每場議事的問題、背景、結論、各大師立場、token 用量與估算費用，並下載 CSV。需要：
+
+1. Vercel 專案 → Storage → 建立 Upstash for Redis（免費方案即可）並連接本專案
+2. 環境變數加入 `ADMIN_PASSWORD`
+3. 重新部署
+
+費用依官方牌價估算（輸入 $2、輸出 $10、快取寫入 $2.50、快取讀取 $0.10，美元／百萬 token），實際以 Anthropic Console 帳單為準。
 
 ## 檔案結構
 
 ```
 index.html      前端頁面（橫幅圖片已內嵌）
-api/ask.js      Vercel Serverless Function，代為呼叫 Claude API
+api/ask.js      Vercel Serverless Function，代為呼叫 Claude API 並記錄每次呼叫
+api/admin.js    後台資料 API（需 ADMIN_PASSWORD）
+api/_store.js   Upstash Redis 儲存與費用計算
+admin.html      後台頁面
 vercel.json     函式逾時設定（60 秒）
 ```
 

@@ -1,5 +1,8 @@
 {
   "functions": {
-    "api/ask.js": { "maxDuration": 60 }
-  }
+    "api/ask.js": { "maxDuration": 60 },
+    "api/admin.js": { "maxDuration": 20 }
+  },
+  "rewrites": [{ "source": "/admin", "destination": "/admin.html" }],
+  "headers": [{ "source": "/admin(.html)?", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] }]
 }
